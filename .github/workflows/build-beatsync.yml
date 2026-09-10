@@ -1,0 +1,65 @@
+name: Build Beatsync YouTube Music
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Assemble full Beatsync source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/upstream
+          git clone --depth 1 https://github.com/freeman-jiang/beatsync.git /tmp/upstream
+
+          # Keep our workflow + overlay, then replace the rest with upstream Beatsync.
+          mkdir -p /tmp/keep
+          cp -a .beatsync-ytmusic /tmp/keep/.beatsync-ytmusic
+          cp -a .github /tmp/keep/.github
+
+          find . -mindepth 1 -maxdepth 1 \
+            ! -name .git \
+            ! -name .github \
+            ! -name .beatsync-ytmusic \
+            -exec rm -rf {} +
+
+          cp -a /tmp/upstream/. .
+          rm -rf .beatsync-ytmusic
+          cp -a /tmp/keep/.beatsync-ytmusic .
+          rm -rf .github
+          cp -a /tmp/keep/.github .
+
+          # Apply the YouTube Music integration.
+          cp .beatsync-ytmusic/apps/server/src/managers/MusicProviderManager.ts apps/server/src/managers/MusicProviderManager.ts
+          cp .beatsync-ytmusic/apps/server/src/websocket/handlers/handleStreamMusic.ts apps/server/src/websocket/handlers/handleStreamMusic.ts
+          cp .beatsync-ytmusic/apps/server/src/routes/youtubeStream.ts apps/server/src/routes/youtubeStream.ts
+          cp .beatsync-ytmusic/apps/server/src/index.ts apps/server/src/index.ts
+          cp .beatsync-ytmusic/apps/server/package.json apps/server/package.json
+
+          # Install and validate the complete workspace.
+          corepack enable || true
+          curl -fsSL https://bun.sh/install | bash
+          export BUN_INSTALL="$HOME/.bun"
+          export PATH="$BUN_INSTALL/bin:$PATH"
+          bun --version
+          bun install --frozen-lockfile=false
+          bun run --cwd apps/server typecheck
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Build complete Beatsync with YouTube Music support" || exit 0
+          git push
