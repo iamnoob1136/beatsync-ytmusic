@@ -1,27 +1,25 @@
-# Beatsync + YouTube Music
+# Beatsync + YouTube Music 🎵
 
 A Beatsync variant designed to use YouTube Music as a streaming source instead of downloading provider tracks into R2.
 
-This repository contains the integration overlay for the current `freeman-jiang/beatsync` codebase. The implementation uses the MIT-licensed `youtubei.js` package for YouTube/InnerTube access and does not copy code from the GPL-3.0 Metrolist project.
+## What you get
 
-## Important
+- YouTube/YouTube Music search from the existing Beatsync search UI.
+- Audio resolved through YouTube.js / InnerTube.
+- Audio proxied through the Beatsync server without persistent storage.
+- Existing Beatsync synchronized multi-device playback.
+- No YouTube API key required.
 
-YouTube playback URLs are temporary. The integration therefore resolves a fresh stream URL when a track is queued rather than treating a stream URL as a permanent asset.
+## Automatic setup
 
-## Upstream
+The GitHub Actions workflow assembles the complete upstream Beatsync source and applies the YouTube Music integration automatically. You do not need to manually copy source files.
+
+The existing Beatsync player buffers the audio into Web Audio for precise synchronization. The important difference is that the server does **not** download the track into R2 or another persistent music library.
+
+## Upstream / dependencies
 
 - Beatsync: https://github.com/freeman-jiang/beatsync
 - YouTube.js / youtubei.js: https://github.com/LuanRT/YouTube.js
-- Metrolist (reference only): https://github.com/MetrolistGroup/Metrolist
+- Metrolist was used only as architectural reference; its GPL-3.0 code is not copied here.
 
-## Integration design
-
-`SEARCH_MUSIC` continues to return Beatsync's existing track model. The provider maintains an in-memory mapping from the numeric Beatsync track id to the YouTube video id. `STREAM_MUSIC` resolves the YouTube audio format and returns a stream URL.
-
-Unlike the upstream handler, the YouTube path must not download the entire response and upload it to R2. Instead, it should add the temporary stream URL as the room audio source.
-
-## Setup
-
-The provider requires `youtubei.js` in `apps/server` and can run without a YouTube API key. Because this relies on YouTube/InnerTube behavior rather than an official public streaming API, breakage can occur when YouTube changes its internal API.
-
-Use this integration only in accordance with the services' terms and applicable law.
+YouTube/InnerTube behavior can change without notice, so occasional maintenance may be required. Use this software in accordance with YouTube's terms and applicable law.
