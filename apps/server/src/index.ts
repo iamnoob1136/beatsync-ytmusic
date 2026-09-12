@@ -1,5 +1,6 @@
 import { ADMIN_SECRET, IS_DEMO_MODE } from "@/demo";
 import { BackupManager } from "@/managers/BackupManager";
+import { validateR2Config } from "@/lib/r2";
 import { getActiveRooms } from "@/routes/active";
 import { handleGetDefaultAudio } from "@/routes/default";
 import { handleServeAudio } from "@/routes/demoAudio";
@@ -11,7 +12,6 @@ import { handleGetPresignedURL, handleUploadComplete } from "@/routes/upload";
 import { handleWebSocketUpgrade } from "@/routes/websocket";
 import { handleYouTubeStream } from "@/routes/youtubeStream";
 import { handleClose, handleMessage, handleOpen } from "@/routes/websocketHandlers";
-import { validateR2Config } from "@/lib/r2";
 import { corsHeaders, errorResponse } from "@/utils/responses";
 import type { WSData } from "@/utils/websocket";
 
