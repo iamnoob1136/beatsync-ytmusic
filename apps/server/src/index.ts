@@ -11,10 +11,12 @@ import { handleGetPresignedURL, handleUploadComplete } from "@/routes/upload";
 import { handleWebSocketUpgrade } from "@/routes/websocket";
 import { handleYouTubeStream } from "@/routes/youtubeStream";
 import { handleClose, handleMessage, handleOpen } from "@/routes/websocketHandlers";
+import { validateR2Config } from "@/lib/r2";
 import { corsHeaders, errorResponse } from "@/utils/responses";
 import type { WSData } from "@/utils/websocket";
 
 const serverPort = Number(process.env.PORT ?? 8080);
+const storageConfigured = validateR2Config().isValid;
 
 const server = Bun.serve<WSData>({
   hostname: "0.0.0.0",
@@ -30,26 +32,52 @@ const server = Bun.serve<WSData>({
         response = handleServeAudio(url.pathname);
       } else {
         switch (url.pathname) {
-          case "/": response = handleRoot(req); break;
-          case "/ws": return handleWebSocketUpgrade(req, server);
-          case "/youtube/stream": response = await handleYouTubeStream(req); break;
+          case "/":
+            response = handleRoot(req);
+            break;
+          case "/ws":
+            return handleWebSocketUpgrade(req, server);
+          case "/youtube/stream":
+            response = await handleYouTubeStream(req);
+            break;
           case "/upload/get-presigned-url":
-            response = IS_DEMO_MODE ? errorResponse("Uploads disabled in demo mode", 403) : await handleGetPresignedURL(req);
+            response =
+              IS_DEMO_MODE || !storageConfigured
+                ? errorResponse("Uploads are disabled because persistent storage is not configured", 503)
+                : await handleGetPresignedURL(req);
             break;
           case "/upload/complete":
-            response = IS_DEMO_MODE ? errorResponse("Uploads disabled in demo mode", 403) : await handleUploadComplete(req, server);
+            response =
+              IS_DEMO_MODE || !storageConfigured
+                ? errorResponse("Uploads are disabled because persistent storage is not configured", 503)
+                : await handleUploadComplete(req, server);
             break;
-          case "/stats": response = await handleStats(); break;
-          case "/default": response = await handleGetDefaultAudio(req); break;
-          case "/active-rooms": response = getActiveRooms(req); break;
-          case "/discover": response = handleDiscover(req); break;
-          case "/health": response = handleHealth(); break;
-          default: response = errorResponse("Not found", 404); break;
+          case "/stats":
+            response = await handleStats();
+            break;
+          case "/default":
+            response = await handleGetDefaultAudio(req);
+            break;
+          case "/active-rooms":
+            response = getActiveRooms(req);
+            break;
+          case "/discover":
+            response = handleDiscover(req);
+            break;
+          case "/health":
+            response = handleHealth();
+            break;
+          default:
+            response = errorResponse("Not found", 404);
+            break;
         }
       }
     } catch (error) {
       const durationMs = (performance.now() - start).toFixed(1);
-      console.error(`[${new Date().toISOString()}] ${req.method} ${url.pathname} 500 ${durationMs}ms - Unhandled error:`, error);
+      console.error(
+        `[${new Date().toISOString()}] ${req.method} ${url.pathname} 500 ${durationMs}ms - Unhandled error:`,
+        error
+      );
       return errorResponse("Internal server error", 500);
     }
 
@@ -58,16 +86,25 @@ const server = Bun.serve<WSData>({
     return response;
   },
   websocket: {
-    open(ws) { handleOpen(ws, server); },
-    message(ws, message) { void handleMessage(ws, message, server); },
-    close(ws) { handleClose(ws, server); },
+    open(ws) {
+      handleOpen(ws, server);
+    },
+    message(ws, message) {
+      void handleMessage(ws, message, server);
+    },
+    close(ws) {
+      handleClose(ws, server);
+    },
   },
 });
 
 console.log(`HTTP listening on http://${server.hostname}:${server.port}`);
 if (IS_DEMO_MODE) console.log(`🔑 Admin secret: ${ADMIN_SECRET}`);
+if (!IS_DEMO_MODE && !storageConfigured) {
+  console.log("ℹ️ Persistent R2 storage is not configured; state backups and uploads are disabled.");
+}
 
-if (!IS_DEMO_MODE) {
+if (!IS_DEMO_MODE && storageConfigured) {
   BackupManager.restoreState().catch((error) => console.error("Failed to restore state on startup:", error));
   setInterval(() => {
     BackupManager.backupState().catch((error) => console.error("Failed to perform periodic backup:", error));
@@ -77,10 +114,13 @@ if (!IS_DEMO_MODE) {
 const shutdown = async () => {
   console.log("\n⚠️ Shutting down...");
   void server.stop();
-  if (!IS_DEMO_MODE) await BackupManager.backupState();
+  if (!IS_DEMO_MODE && storageConfigured) await BackupManager.backupState();
   process.exit(0);
 };
 process.on("SIGTERM", () => void shutdown());
 process.on("SIGINT", () => void shutdown());
-process.on("uncaughtException", (error) => { console.error("UNCAUGHT EXCEPTION:", error); process.exit(1); });
+process.on("uncaughtException", (error) => {
+  console.error("UNCAUGHT EXCEPTION:", error);
+  process.exit(1);
+});
 process.on("unhandledRejection", (reason) => console.error("UNHANDLED REJECTION:", reason));
