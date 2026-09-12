@@ -30,6 +30,8 @@ jobs:
           cp -a .beatsync-ytmusic /tmp/keep/.beatsync-ytmusic
           cp -a .github /tmp/keep/.github
           cp -a render.yaml /tmp/keep/render.yaml
+          cp -a Dockerfile /tmp/keep/Dockerfile
+          cp -a Dockerfile.client /tmp/keep/Dockerfile.client
           cp -a README.md /tmp/keep/README.md
 
           find . -mindepth 1 -maxdepth 1 \
@@ -37,6 +39,8 @@ jobs:
             ! -name .github \
             ! -name .beatsync-ytmusic \
             ! -name render.yaml \
+            ! -name Dockerfile \
+            ! -name Dockerfile.client \
             ! -name README.md \
             -exec rm -rf {} +
 
@@ -45,6 +49,8 @@ jobs:
           cp -a /tmp/keep/.beatsync-ytmusic .
           cp -a /tmp/keep/.github .
           cp -a /tmp/keep/render.yaml .
+          cp -a /tmp/keep/Dockerfile .
+          cp -a /tmp/keep/Dockerfile.client .
           cp -a /tmp/keep/README.md .
 
           # Apply the YouTube Music integration.
