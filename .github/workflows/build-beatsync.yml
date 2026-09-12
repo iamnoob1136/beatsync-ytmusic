@@ -51,6 +51,7 @@ jobs:
           cp .beatsync-ytmusic/apps/client/src/lib/urls.ts apps/client/src/lib/urls.ts
           cp .beatsync-ytmusic/Dockerfile Dockerfile
           cp .beatsync-ytmusic/render.yaml render.yaml
+          cp .beatsync-ytmusic/README.md README.md
 
           # Install and validate the complete workspace.
           corepack enable || true
