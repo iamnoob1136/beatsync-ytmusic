@@ -25,33 +25,35 @@ jobs:
           rm -rf /tmp/upstream
           git clone --depth 1 https://github.com/freeman-jiang/beatsync.git /tmp/upstream
 
-          # Keep our workflow + overlay, then replace the rest with upstream Beatsync.
+          # Keep our integration, workflow, and deployment files.
           mkdir -p /tmp/keep
           cp -a .beatsync-ytmusic /tmp/keep/.beatsync-ytmusic
           cp -a .github /tmp/keep/.github
+          cp -a render.yaml /tmp/keep/render.yaml
+          cp -a README.md /tmp/keep/README.md
 
           find . -mindepth 1 -maxdepth 1 \
             ! -name .git \
             ! -name .github \
             ! -name .beatsync-ytmusic \
+            ! -name render.yaml \
+            ! -name README.md \
             -exec rm -rf {} +
 
           cp -a /tmp/upstream/. .
-          rm -rf .beatsync-ytmusic
+          rm -rf .beatsync-ytmusic .github
           cp -a /tmp/keep/.beatsync-ytmusic .
-          rm -rf .github
           cp -a /tmp/keep/.github .
+          cp -a /tmp/keep/render.yaml .
+          cp -a /tmp/keep/README.md .
 
-          # Apply the YouTube Music integration and deployment fixes.
+          # Apply the YouTube Music integration.
           cp .beatsync-ytmusic/apps/server/src/managers/MusicProviderManager.ts apps/server/src/managers/MusicProviderManager.ts
           cp .beatsync-ytmusic/apps/server/src/websocket/handlers/handleStreamMusic.ts apps/server/src/websocket/handlers/handleStreamMusic.ts
           cp .beatsync-ytmusic/apps/server/src/routes/youtubeStream.ts apps/server/src/routes/youtubeStream.ts
           cp .beatsync-ytmusic/apps/server/src/index.ts apps/server/src/index.ts
           cp .beatsync-ytmusic/apps/server/package.json apps/server/package.json
           cp .beatsync-ytmusic/apps/client/src/lib/urls.ts apps/client/src/lib/urls.ts
-          cp .beatsync-ytmusic/Dockerfile Dockerfile
-          cp .beatsync-ytmusic/render.yaml render.yaml
-          cp .beatsync-ytmusic/README.md README.md
 
           # Install and validate the complete workspace.
           corepack enable || true
