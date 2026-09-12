@@ -1,18 +1,21 @@
 FROM oven/bun:1 AS build
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
-RUN git clone --depth 1 https://github.com/freeman-jiang/beatsync.git /tmp/upstream
-RUN cp -a /tmp/upstream/. /app/
+# Build directly from the complete Beatsync source assembled by GitHub Actions.
+COPY package.json ./
+COPY bun.lock ./
+COPY apps ./apps
+COPY packages ./packages
+COPY turbo.json ./turbo.json
 
-COPY .beatsync-ytmusic/apps/client/src/lib/urls.ts /app/apps/client/src/lib/urls.ts
-COPY .beatsync-ytmusic/apps/client/package.json /app/apps/client/package.json
-
-RUN bun install
+RUN bun install --frozen-lockfile
 RUN bun run --cwd apps/client build
 
 FROM oven/bun:1-slim AS runner
 WORKDIR /app
+
 COPY --from=build /app /app
 ENV NODE_ENV=production
+
+EXPOSE 3000
 CMD ["bun", "run", "--cwd", "apps/client", "start"]
