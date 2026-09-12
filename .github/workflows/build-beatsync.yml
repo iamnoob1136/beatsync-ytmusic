@@ -42,12 +42,15 @@ jobs:
           rm -rf .github
           cp -a /tmp/keep/.github .
 
-          # Apply the YouTube Music integration.
+          # Apply the YouTube Music integration and deployment fixes.
           cp .beatsync-ytmusic/apps/server/src/managers/MusicProviderManager.ts apps/server/src/managers/MusicProviderManager.ts
           cp .beatsync-ytmusic/apps/server/src/websocket/handlers/handleStreamMusic.ts apps/server/src/websocket/handlers/handleStreamMusic.ts
           cp .beatsync-ytmusic/apps/server/src/routes/youtubeStream.ts apps/server/src/routes/youtubeStream.ts
           cp .beatsync-ytmusic/apps/server/src/index.ts apps/server/src/index.ts
           cp .beatsync-ytmusic/apps/server/package.json apps/server/package.json
+          cp .beatsync-ytmusic/apps/client/src/lib/urls.ts apps/client/src/lib/urls.ts
+          cp .beatsync-ytmusic/Dockerfile Dockerfile
+          cp .beatsync-ytmusic/render.yaml render.yaml
 
           # Install and validate the complete workspace.
           corepack enable || true
@@ -57,6 +60,7 @@ jobs:
           bun --version
           bun install
           bun run --cwd apps/server typecheck
+          bun run --cwd apps/client typecheck
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
