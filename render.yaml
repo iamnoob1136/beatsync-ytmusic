@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: beatsync-server
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+
+  - type: web
+    name: beatsync-client
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && bun install --frozen-lockfile=false && bun run --cwd apps/client build
+    startCommand: bun run --cwd apps/client start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: beatsync-server
+          property: host
+      - key: NEXT_PUBLIC_WS_URL
+        fromService:
+          type: web
+          name: beatsync-server
+          property: host
