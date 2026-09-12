@@ -55,7 +55,7 @@ jobs:
           export BUN_INSTALL="$HOME/.bun"
           export PATH="$BUN_INSTALL/bin:$PATH"
           bun --version
-          bun install --frozen-lockfile=false
+          bun install
           bun run --cwd apps/server typecheck
 
           git config user.name "github-actions[bot]"
