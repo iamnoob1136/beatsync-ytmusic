@@ -5,16 +5,7 @@ import { sendBroadcast } from "@/utils/responses";
 import type { HandlerFunction } from "@/websocket/types";
 import type { ExtractWSRequestFrom } from "@beatsync/shared";
 
-/**
- * Resolves a short-lived YouTube Music URL and shares that URL with the room.
- * Unlike upstream Beatsync this handler deliberately does NOT fetch the audio
- * bytes and does NOT upload anything to Cloudflare R2.
- */
-export const handleStreamMusic: HandlerFunction<ExtractWSRequestFrom["STREAM_MUSIC"]> = async ({
-  ws,
-  message,
-  server,
-}) => {
+export const handleStreamMusic: HandlerFunction<ExtractWSRequestFrom["STREAM_MUSIC"]> = async ({ ws, message, server }) => {
   if (IS_DEMO_MODE) return;
   const roomId = ws.data.roomId;
   const room = globalManager.getRoom(roomId);
@@ -24,35 +15,25 @@ export const handleStreamMusic: HandlerFunction<ExtractWSRequestFrom["STREAM_MUS
   if (room.hasActiveStreamJob(trackId)) return;
 
   room.addStreamJob(trackId);
-  sendBroadcast({
-    server,
-    roomId,
-    message: { type: "STREAM_JOB_UPDATE", activeJobCount: room.getActiveStreamJobCount() },
-  });
+  sendBroadcast({ server, roomId, message: { type: "STREAM_JOB_UPDATE", activeJobCount: room.getActiveStreamJobCount() } });
 
   try {
     const streamResponse = await MUSIC_PROVIDER_MANAGER.stream(message.trackId);
-    if (!streamResponse.success) throw new Error("Failed to resolve YouTube Music stream");
+    if (!streamResponse.success) throw new Error("Failed to resolve YouTube Music track");
 
-    // This is intentionally the temporary YouTube URL, not an R2 object URL.
+    // The URL is a server-side proxy. Audio is streamed from YouTube through the server
+    // and is never written to R2 or another persistent store.
     const sources = room.addAudioSource({ url: streamResponse.data.url });
 
     sendBroadcast({
       server,
       roomId,
-      message: {
-        type: "ROOM_EVENT",
-        event: { type: "SET_AUDIO_SOURCES", sources },
-      },
+      message: { type: "ROOM_EVENT", event: { type: "SET_AUDIO_SOURCES", sources } },
     });
   } catch (error) {
     console.error("Error resolving YouTube Music stream:", error);
   } finally {
     room.removeStreamJob(trackId);
-    sendBroadcast({
-      server,
-      roomId,
-      message: { type: "STREAM_JOB_UPDATE", activeJobCount: room.getActiveStreamJobCount() },
-    });
+    sendBroadcast({ server, roomId, message: { type: "STREAM_JOB_UPDATE", activeJobCount: room.getActiveStreamJobCount() } });
   }
 };
