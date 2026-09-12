@@ -1,10 +1,13 @@
 FROM oven/bun:1 AS build
 WORKDIR /app
 
-# Beatsync's install hooks expect git to be available.
+# Beatsync's install hook uses git, and the Render build context is not itself a Git checkout.
 RUN apt-get update \
   && apt-get install -y --no-install-recommends git ca-certificates \
   && rm -rf /var/lib/apt/lists/*
+
+# Create a temporary Git checkout so the upstream prepare/lefthook step can run during install.
+RUN git init
 
 # Build directly from the complete Beatsync source assembled by GitHub Actions.
 COPY package.json ./
@@ -15,6 +18,9 @@ COPY turbo.json ./turbo.json
 
 RUN bun install --frozen-lockfile
 RUN bun run --cwd apps/client build
+
+# Hooks are not needed in the production image.
+RUN rm -rf .git
 
 FROM oven/bun:1-slim AS runner
 WORKDIR /app
