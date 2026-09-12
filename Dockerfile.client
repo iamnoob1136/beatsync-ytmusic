@@ -1,13 +1,20 @@
 FROM oven/bun:1 AS build
 WORKDIR /app
 
-# Beatsync's install hook uses git, and the Render build context is not itself a Git checkout.
+# Beatsync's install hook uses git, and the Railway build context is not a Git checkout.
 RUN apt-get update \
   && apt-get install -y --no-install-recommends git ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
 # Create a temporary Git checkout so the upstream prepare/lefthook step can run during install.
 RUN git init
+
+# Railway/Next.js needs NEXT_PUBLIC_* variables available while next build runs.
+# Railway requires build-time Docker variables to be declared with ARG.
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_WS_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 
 # Build directly from the complete Beatsync source assembled by GitHub Actions.
 COPY package.json ./
