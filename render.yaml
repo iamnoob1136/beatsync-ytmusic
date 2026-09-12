@@ -10,7 +10,13 @@ services:
     name: beatsync-client
     runtime: node
     plan: free
-    buildCommand: corepack enable && bun install --frozen-lockfile=false && bun run --cwd apps/client build
+    buildCommand: >-
+      apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/* &&
+      rm -rf /tmp/upstream && git clone --depth 1 https://github.com/freeman-jiang/beatsync.git /tmp/upstream &&
+      cp -a /tmp/upstream/. ./ &&
+      cp .beatsync-ytmusic/apps/client/src/lib/urls.ts apps/client/src/lib/urls.ts &&
+      cp .beatsync-ytmusic/apps/client/package.json apps/client/package.json &&
+      bun install && bun run --cwd apps/client build
     startCommand: bun run --cwd apps/client start
     envVars:
       - key: NEXT_PUBLIC_API_URL
