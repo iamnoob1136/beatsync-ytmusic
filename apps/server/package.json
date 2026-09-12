@@ -35,7 +35,7 @@
     "p-limit": "7.3.0",
     "sanitize-filename": "1.6.4",
     "zod": "4.4.3",
-    "youtubei.js": "latest"
+    "youtubei.js": "18.0.0"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
