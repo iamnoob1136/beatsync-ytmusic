@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: beatsync-server
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "10000"
+
+  - type: web
+    name: beatsync-client
+    runtime: node
+    plan: free
+    buildCommand: bun install && bun run --cwd apps/client build
+    startCommand: bun run --cwd apps/client start
+    envVars:
+      - key: BUN_VERSION
+        value: "1.4.2"
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          name: beatsync-server
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
