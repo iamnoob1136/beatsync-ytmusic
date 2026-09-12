@@ -60,12 +60,26 @@ jobs:
           cp .beatsync-ytmusic/apps/server/package.json apps/server/package.json
           cp .beatsync-ytmusic/apps/client/src/lib/urls.ts apps/client/src/lib/urls.ts
 
+          test -f turbo.json
+          test -f package.json
+          test -f apps/client/package.json
+          test -f apps/server/package.json
+          test -f render.yaml
+          test -f Dockerfile
+          test -f Dockerfile.client
+
           curl -fsSL https://bun.sh/install | bash
           export BUN_INSTALL="$HOME/.bun"
           export PATH="$BUN_INSTALL/bin:$PATH"
+          bun --version
           bun install
           bun run --cwd apps/server typecheck
           bun run --cwd apps/client typecheck
+
+          # These are the same Docker builds Render will perform. Do them here so
+          # a broken deployment never gets published to main.
+          docker build -f Dockerfile.client -t beatsync-client-ci .
+          docker build -f Dockerfile -t beatsync-server-ci .
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
