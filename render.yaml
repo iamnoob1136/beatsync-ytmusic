@@ -13,6 +13,7 @@ services:
     dockerfilePath: ./Dockerfile.client
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://beatsync-server.onrender.com
-      - key: NEXT_PUBLIC_WS_URL
-        value: wss://beatsync-server.onrender.com/ws
+        fromService:
+          name: beatsync-server
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
