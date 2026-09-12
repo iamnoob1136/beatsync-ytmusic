@@ -1,6 +1,11 @@
 FROM oven/bun:1 AS build
 WORKDIR /app
 
+# Beatsync's install hooks expect git to be available.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends git ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
 # Build directly from the complete Beatsync source assembled by GitHub Actions.
 COPY package.json ./
 COPY bun.lock ./
