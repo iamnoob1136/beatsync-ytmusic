@@ -24,6 +24,7 @@ jobs:
           set -euo pipefail
           rm -rf /tmp/upstream /tmp/keep
           git clone --depth 1 https://github.com/freeman-jiang/beatsync.git /tmp/upstream
+          rm -rf /tmp/upstream/.git
 
           mkdir -p /tmp/keep
           cp -a .beatsync-ytmusic /tmp/keep/.beatsync-ytmusic
@@ -70,4 +71,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git -c core.hooksPath=/dev/null commit -m "Build complete Beatsync with YouTube Music support" || true
-          git push
+          git push origin HEAD:main
