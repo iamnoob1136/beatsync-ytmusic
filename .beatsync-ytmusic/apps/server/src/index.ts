@@ -14,9 +14,11 @@ import { handleClose, handleMessage, handleOpen } from "@/routes/websocketHandle
 import { corsHeaders, errorResponse } from "@/utils/responses";
 import type { WSData } from "@/utils/websocket";
 
+const serverPort = Number(process.env.PORT ?? 8080);
+
 const server = Bun.serve<WSData>({
   hostname: "0.0.0.0",
-  port: 8080,
+  port: serverPort,
   async fetch(req, server) {
     const start = performance.now();
     const url = new URL(req.url);
